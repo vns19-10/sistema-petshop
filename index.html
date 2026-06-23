@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop Pro - Gerenciamento Operacional</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <h1>PetShop <span>Pro</span></h1>
+        <nav aria-label="Navegação principal">
+            <ul>
+                <li><a href="#dashboard" class="nav-link active" data-target="view-dashboard">Painel Kanban</a></li>
+                <li><a href="#cadastro" class="nav-link" data-target="view-cadastro">Novo Check-in</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main id="app-container">
+
+        <section id="view-dashboard" class="app-view active" aria-live="polite">
+            <h2>Esteira de Produção (Banho & Tosa)</h2>
+            <div class="kanban-board">
+                
+                <article class="kanban-column" id="col-fila">
+                    <h3>Em Espera (<span id="count-fila">0</span>)</h3>
+                    <div class="cards-container" id="container-fila" role="list"></div>
+                </article>
+
+                <article class="kanban-column" id="col-andamento">
+                    <h3>Em Atendimento (<span id="count-andamento">0</span>)</h3>
+                    <div class="cards-container" id="container-andamento" role="list"></div>
+                </article>
+
+                <article class="kanban-column" id="col-pronto">
+                    <h3>Concluído (<span id="count-pronto">0</span>)</h3>
+                    <div class="cards-container" id="container-pronto" role="list"></div>
+                </article>
+
+            </div>
+        </section>
+
+        <section id="view-cadastro" class="app-view hidden">
+            <h2>Entrada de Cliente e Pet</h2>
+            <form id="form-checkin" novalidate>
+                
+                <fieldset>
+                    <legend>Dados do Tutor</legend>
+                    <div class="form-group">
+                        <label for="tutor-nome">Nome do Cliente:</label>
+                        <input type="text" id="tutor-nome" required minlength="3" placeholder="Ex: Mariana Costa">
+                    </div>
+                    <div class="form-group">
+                        <label for="tutor-telefone">Telefone de Contato:</label>
+                        <input type="tel" id="tutor-telefone" required placeholder="(81) 99999-9999">
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Dados do Animal & Serviço</legend>
+                    <div class="form-group">
+                        <label for="pet-nome">Nome do Pet:</label>
+                        <input type="text" id="pet-nome" required placeholder="Ex: Thor">
+                    </div>
+                    <div class="form-group">
+                        <label for="pet-raca">Raça:</label>
+                        <input type="text" id="pet-raca" required placeholder="Ex: Shih Tzu">
+                    </div>
+                    <div class="form-group">
+                        <label for="servico-tipo">Serviço Solicitado:</label>
+                        <select id="servico-tipo" required>
+                            <option value="" disabled selected>Selecione um serviço...</option>
+                            <option value="Banho Simples">Banho Simples</option>
+                            <option value="Banho e Tosa Higiênica">Banho e Tosa Higiênica</option>
+                            <option value="Banho e Tosa Completa">Banho e Tosa Completa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="servico-valor">Valor do Serviço (R$):</label>
+                        <input type="number" id="servico-valor" required min="0" step="0.01" placeholder="0,00">
+                    </div>
+                    <div class="form-group">
+                        <label for="pet-obs">Alertas / Observações Restritivas:</label>
+                        <textarea id="pet-obs" rows="3" placeholder="Ex: Alergia a xampu de coco / Bravo com o soprador."></textarea>
+                    </div>
+                </fieldset>
+
+                <button type="submit" class="btn-submit">Dar Entrada na Fila</button>
+            </form>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2026 PetShop Pro - Sistema de Gestão Operacional Integrada.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
