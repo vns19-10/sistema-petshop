@@ -87,7 +87,8 @@ function renderizarKanban() {
                         `<button onclick="mudarStatusAtendimento(${atendimento.id}, 'Pronto')">Finalizar ➔</button>` : ''}
                     
                     ${atendimento.status === 'Pronto' ? 
-                        `<span class="txt-concluido">✓ Pronto para Retirada</span>` : ''}
+                        `<span class="txt-concluido">✓ Pronto para Retirada</span>
+                        <button onclick="entregarPet(${atendimento.id})" style="background-color: #e53e3e; margin-top: 10px;">Entregar Pet ➔</button>` : ''}
                 </div>
             </div>
         `;
@@ -121,6 +122,15 @@ function mudarStatusAtendimento(atendimentoId, novoStatus) {
     }
 }
 
+function entregarPet(atendimentoId) {
+    const atendimento = DB_PETSHUB.atendimentos.find(a => a.id === atendimentoId);
+    if (atendimento) {
+        atendimento.status = 'Entregue';
+        DB_PETSHUB.salvar();
+        renderizarKanban();
+    }
+}
+
 function inicializarFormulario() {
     const form = document.getElementById('form-checkin');
 
@@ -140,27 +150,25 @@ function inicializarFormulario() {
             return;
         }
 
-        const novoClienteId = DB_PETSHUB.clientes.length > 0 ? Math.max(...DB_PETSHUB.clientes.map(c => c.id)) + 1 : 1;
-        const novoPetId = DB_PETSHUB.pets.length > 0 ? Math.max(...DB_PETSHUB.pets.map(p => p.id)) + 1 : 1;
+        let clienteAtualId = form.dataset.clienteId ? parseInt(form.dataset.clienteId) : null;
+        let petAtualId = form.dataset.petId ? parseInt(form.dataset.petId) : null;
+
+        if (!petAtualId) {
+            clienteAtualId = DB_PETSHUB.clientes.length > 0 ? Math.max(...DB_PETSHUB.clientes.map(c => c.id)) + 1 : 1;
+            petAtualId = DB_PETSHUB.pets.length > 0 ? Math.max(...DB_PETSHUB.pets.map(p => p.id)) + 1 : 1;
+
+            DB_PETSHUB.clientes.push({ id: clienteAtualId, nome: nomeTutor, telefone: telTutor });
+            DB_PETSHUB.pets.push({ id: petAtualId, clienteId: clienteAtualId, nome: nomePet, raca: racaPet, observacoes: observacoes });
+        } else {
+            const petExistente = DB_PETSHUB.pets.find(p => p.id === petAtualId);
+            if (petExistente) petExistente.observacoes = observacoes;
+        }
+
         const novoAtendimentoId = DB_PETSHUB.atendimentos.length > 0 ? Math.max(...DB_PETSHUB.atendimentos.map(a => a.id)) + 1 : 1;
-
-        DB_PETSHUB.clientes.push({
-            id: novoClienteId,
-            nome: nomeTutor,
-            telefone: telTutor
-        });
-
-        DB_PETSHUB.pets.push({
-            id: novoPetId,
-            clienteId: novoClienteId,
-            nome: nomePet,
-            raca: racaPet,
-            observacoes: observacoes
-        });
-
+        
         DB_PETSHUB.atendimentos.push({
             id: novoAtendimentoId,
-            petId: novoPetId,
+            petId: petAtualId,
             servico: servico,
             valor: valor,
             status: 'Fila',
@@ -170,18 +178,82 @@ function inicializarFormulario() {
         DB_PETSHUB.salvar();
 
         form.reset();
+        form.removeAttribute('data-pet-id');
+        form.removeAttribute('data-cliente-id');
+        ['tutor-nome', 'tutor-telefone', 'pet-nome', 'pet-raca'].forEach(id => {
+            document.getElementById(id).readOnly = false;
+            document.getElementById(id).style.backgroundColor = '';
+        });
 
-        alert(`Check-in do pet ${nomePet} realizado com sucesso!`);
+        alert(`Serviço para ${nomePet} registrado com sucesso!`);
         
         document.querySelector('.nav-link[data-target="view-dashboard"]').click();
         
         renderizarKanban();
+        renderizarPetsCadastrados();
     });
 }
+function renderizarPetsCadastrados() {
+    const container = document.getElementById('lista-pets');
+    container.innerHTML = '';
+
+    DB_PETSHUB.pets.forEach(pet => {
+        const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
+        
+        container.innerHTML += `
+            <div class="pet-card">
+                <h4>${pet.nome} <span class="badge-raca">(${pet.raca})</span></h4>
+                <p><strong>Tutor:</strong> ${cliente.nome}</p>
+                <p><strong>Telefone:</strong> ${cliente.telefone}</p>
+                <button onclick="prepararNovoAtendimento(${pet.id})" style="margin-top: 10px;">+ Novo Atendimento</button>
+            </div>
+        `;
+    });
+}
+
+function prepararNovoAtendimento(petId) {
+    const pet = DB_PETSHUB.pets.find(p => p.id === petId);
+    const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
+
+    const form = document.getElementById('form-checkin');
+
+    document.getElementById('tutor-nome').value = cliente.nome;
+    document.getElementById('tutor-telefone').value = cliente.telefone;
+    document.getElementById('pet-nome').value = pet.nome;
+    document.getElementById('pet-raca').value = pet.raca;
+    document.getElementById('pet-obs').value = pet.observacoes || '';
+
+    const camposTravados = ['tutor-nome', 'tutor-telefone', 'pet-nome', 'pet-raca'];
+    camposTravados.forEach(id => {
+        document.getElementById(id).readOnly = true;
+        document.getElementById(id).style.backgroundColor = '#e2e8f0';
+    });
+
+    form.dataset.petId = pet.id;
+    form.dataset.clienteId = cliente.id;
+
+    document.getElementById('servico-tipo').value = '';
+    document.getElementById('servico-valor').value = '';
+
+    document.querySelector('.nav-link[data-target="view-cadastro"]').click();
+}
+
+document.querySelector('.nav-link[data-target="view-cadastro"]').addEventListener('click', () => {
+    const form = document.getElementById('form-checkin');
+    
+    if (!form.dataset.petId) {
+        form.reset();
+        ['tutor-nome', 'tutor-telefone', 'pet-nome', 'pet-raca'].forEach(id => {
+            document.getElementById(id).readOnly = false;
+            document.getElementById(id).style.backgroundColor = '';
+        });
+    }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     carregarDadosIniciais();
     inicializarRotas();
     renderizarKanban();
+    renderizarPetsCadastrados();
     inicializarFormulario();
 });

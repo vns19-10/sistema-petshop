@@ -14,6 +14,7 @@
             <ul>
                 <li><a href="#dashboard" class="nav-link active" data-target="view-dashboard">Painel Kanban</a></li>
                 <li><a href="#cadastro" class="nav-link" data-target="view-cadastro">Novo Check-in</a></li>
+                <li><a href="#cadastrados" class="nav-link" data-target="view-cadastrados">Pets Cadastrados</a></li>
             </ul>
         </nav>
     </header>
@@ -89,6 +90,14 @@
 
                 <button type="submit" class="btn-submit">Dar Entrada na Fila</button>
             </form>
+        </section>
+
+        <section id="view-cadastrados" class="app-view hidden">
+                <h2>Histórico de Pets Cadastrados</h2>
+                    <p>Clique em "Novo Atendimento" para gerar um serviço sem precisar recadastrar.</p>
+                        <br>
+                <div id="lista-pets" class="cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                </div>
         </section>
 
     </main>
