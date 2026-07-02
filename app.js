@@ -10,6 +10,19 @@ const DB_PETSHUB = {
         localStorage.setItem('ph_atendimentos', JSON.stringify(this.atendimentos));
     }
 };
+
+// --- FUNÇÃO DE SEGURANÇA (FILTRO ANTI-XSS) ---
+function escaparHTML(texto) {
+    if (!texto) return '';
+    // Transforma caracteres perigosos em entidades de texto inofensivas
+    return texto.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function carregarDadosIniciais() {
     if (DB_PETSHUB.clientes.length === 0) {
         DB_PETSHUB.clientes.push({ id: 1, nome: "Mariana Costa", telefone: "(81) 99999-1111" });
@@ -51,33 +64,39 @@ function inicializarRotas() {
     });
 }
 
+// --- 5. RENDERIZAÇÃO DO QUADRO KANBAN (OTIMIZADO E SEGURO) ---
 function renderizarKanban() {
     const containerFila = document.getElementById('container-fila');
     const containerAndamento = document.getElementById('container-andamento');
     const containerPronto = document.getElementById('container-pronto');
 
-    containerFila.innerHTML = '';
-    containerAndamento.innerHTML = '';
-    containerPronto.innerHTML = '';
+    let htmlFila = '';
+    let htmlAndamento = '';
+    let htmlPronto = '';
 
     let qtdFila = 0;
     let qtdAndamento = 0;
     let qtdPronto = 0;
 
     DB_PETSHUB.atendimentos.forEach(atendimento => {
-        
         const pet = DB_PETSHUB.pets.find(p => p.id === atendimento.petId);
         const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
-
         const temAlerta = pet.observacoes && pet.observacoes.trim() !== '';
+
+        // 🛡️ APLICAÇÃO DA CAMADA DE SEGURANÇA (SANITIZAÇÃO)
+        const nomeSeguro = escaparHTML(pet.nome);
+        const racaSegura = escaparHTML(pet.raca);
+        const servicoSeguro = escaparHTML(atendimento.servico);
+        const tutorSeguro = escaparHTML(cliente.nome);
+        const obsSegura = temAlerta ? escaparHTML(pet.observacoes) : '';
 
         const cardHTML = `
             <div class="pet-card ${temAlerta ? 'tem-alerta' : ''}" role="listitem">
-                <h4>${pet.nome} <span class="badge-raca">(${pet.raca})</span></h4>
-                <p><strong>Serviço:</strong> ${atendimento.servico}</p>
-                <p><strong>Tutor:</strong> ${cliente.nome} - ${cliente.telefone}</p>
+                <h4>${nomeSeguro} <span class="badge-raca">(${racaSegura})</span></h4>
+                <p><strong>Serviço:</strong> ${servicoSeguro}</p>
+                <p><strong>Tutor:</strong> ${tutorSeguro} - ${escaparHTML(cliente.telefone)}</p>
                 
-                ${temAlerta ? `<p class="txt-alerta">⚠️ <strong>Restrição:</strong> ${pet.observacoes}</p>` : ''}
+                ${temAlerta ? `<p class="txt-alerta">⚠️ <strong>Restrição:</strong> ${obsSegura}</p>` : ''}
                 
                 <div class="card-actions">
                     ${atendimento.status === 'Fila' ? 
@@ -88,22 +107,26 @@ function renderizarKanban() {
                     
                     ${atendimento.status === 'Pronto' ? 
                         `<span class="txt-concluido">✓ Pronto para Retirada</span>
-                        <button onclick="entregarPet(${atendimento.id})" style="background-color: #e53e3e; margin-top: 10px;">Entregar Pet ➔</button>` : ''}
+                         <button onclick="entregarPet(${atendimento.id})" style="background-color: #e53e3e; margin-top: 10px;">Entregar Pet ➔</button>` : ''}
                 </div>
             </div>
         `;
 
         if (atendimento.status === 'Fila') {
-            containerFila.innerHTML += cardHTML;
+            htmlFila += cardHTML;
             qtdFila++;
         } else if (atendimento.status === 'Andamento') {
-            containerAndamento.innerHTML += cardHTML;
+            htmlAndamento += cardHTML;
             qtdAndamento++;
         } else if (atendimento.status === 'Pronto') {
-            containerPronto.innerHTML += cardHTML;
+            htmlPronto += cardHTML;
             qtdPronto++;
         }
     });
+
+    containerFila.innerHTML = htmlFila;
+    containerAndamento.innerHTML = htmlAndamento;
+    containerPronto.innerHTML = htmlPronto;
 
     document.getElementById('count-fila').textContent = qtdFila;
     document.getElementById('count-andamento').textContent = qtdAndamento;
