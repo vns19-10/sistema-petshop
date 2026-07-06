@@ -164,3 +164,130 @@ fieldset {
     border-top: 1px solid var(--border-color);
     font-size: 0.9rem;
 }
+
+/* =========================================
+   SOFISTICAÇÃO E NOVOS COMPONENTES (UP UI)
+   ========================================= */
+
+/* 1. Efeito Hover (Interatividade) nos Cartões */
+.pet-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pet-card:hover {
+    transform: translateY(-4px); /* Faz o cartão "flutuar" levemente para cima */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Aumenta a sombra criando profundidade */
+}
+
+/* 2. Estilização da Barra de Pesquisa */
+.busca-container {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#input-busca {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    background-color: white;
+}
+
+#input-busca:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* 3. Novos Botões para a Aba de Cadastros (CRUD) */
+.btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-editar, .btn-excluir {
+    flex: 1; /* Faz os botões dividirem o espaço igualmente */
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: white;
+}
+
+.btn-editar {
+    background-color: #64748b; /* Cinza azulado elegante */
+}
+.btn-editar:hover { background-color: #475569; }
+
+.btn-excluir {
+    background-color: var(--alert-color);
+}
+.btn-excluir:hover { background-color: #dc2626; }
+
+/* 4. Estilização do Modal (Pop-up Customizado) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.7); /* Fundo escuro semi-transparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Garante que fique por cima de tudo */
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.modal-overlay.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.modal-box {
+    background-color: var(--bg-card);
+    padding: 25px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    transform: scale(1);
+    transition: transform 0.2s ease;
+}
+
+.modal-box h3 {
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.modal-actions button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-secundario {
+    background-color: #e2e8f0;
+    color: #475569;
+}
+.btn-secundario:hover { background-color: #cbd5e1; }
+
+.btn-perigo {
+    background-color: var(--alert-color);
+    color: white;
+}
+.btn-perigo:hover { background-color: #dc2626; }

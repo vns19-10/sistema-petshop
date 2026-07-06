@@ -93,10 +93,15 @@
         </section>
 
         <section id="view-cadastrados" class="app-view hidden">
-                <h2>Histórico de Pets Cadastrados</h2>
-                    <p>Clique em "Novo Atendimento" para gerar um serviço sem precisar recadastrar.</p>
-                        <br>
-                <div id="lista-pets" class="cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+            <h2>Histórico de Pets Cadastrados</h2>
+            <p>Clique em "Novo Atendimento" para gerar um serviço sem precisar recadastrar.</p>
+    
+            <div class="busca-container">
+                <input type="text" id="input-busca" placeholder="🔍 Buscar pelo nome do pet ou do tutor..." aria-label="Buscar pets">
+            </div>
+            <br>
+    
+            <div id="lista-pets" class="cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
                 </div>
         </section>
 
@@ -105,6 +110,17 @@
     <footer class="main-footer">
         <p>&copy; 2026 Pet's Hub - Sistema Operacional</p>
     </footer>
+
+    <div id="modal-overlay" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal-box" role="dialog" aria-modal="true">
+            <h3 id="modal-titulo">Atenção</h3>
+            <p id="modal-mensagem">Tem certeza que deseja realizar esta ação?</p>
+            <div class="modal-actions">
+                <button id="btn-modal-cancelar" class="btn-secundario">Cancelar</button>
+                <button id="btn-modal-confirmar" class="btn-perigo">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
