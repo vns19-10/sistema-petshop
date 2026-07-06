@@ -11,10 +11,8 @@ const DB_PETSHUB = {
     }
 };
 
-// --- FUNÇÃO DE SEGURANÇA (FILTRO ANTI-XSS) ---
 function escaparHTML(texto) {
     if (!texto) return '';
-    // Transforma caracteres perigosos em entidades de texto inofensivas
     return texto.toString()
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -64,7 +62,6 @@ function inicializarRotas() {
     });
 }
 
-// --- 5. RENDERIZAÇÃO DO QUADRO KANBAN (OTIMIZADO E SEGURO) ---
 function renderizarKanban() {
     const containerFila = document.getElementById('container-fila');
     const containerAndamento = document.getElementById('container-andamento');
@@ -82,13 +79,11 @@ function renderizarKanban() {
         const pet = DB_PETSHUB.pets.find(p => p.id === atendimento.petId);
         const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
         const temAlerta = pet.observacoes && pet.observacoes.trim() !== '';
-
-        // 🛡️ APLICAÇÃO DA CAMADA DE SEGURANÇA (SANITIZAÇÃO)
-        const nomeSeguro = escaparHTML(pet.nome);
-        const racaSegura = escaparHTML(pet.raca);
-        const servicoSeguro = escaparHTML(atendimento.servico);
-        const tutorSeguro = escaparHTML(cliente.nome);
-        const obsSegura = temAlerta ? escaparHTML(pet.observacoes) : '';
+        const nomeSeguro = pet.nome;
+        const racaSegura = pet.raca;
+        const servicoSeguro = atendimento.servico;
+        const tutorSeguro = cliente.nome;
+        const obsSegura = temAlerta ? pet.observacoes : '';
 
         const cardHTML = `
             <div class="pet-card ${temAlerta ? 'tem-alerta' : ''}" role="listitem">
