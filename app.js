@@ -78,14 +78,12 @@ function renderizarKanban() {
 
     DB_PETSHUB.atendimentos.forEach(atendimento => {
         const pet = DB_PETSHUB.pets.find(p => p.id === atendimento.petId);
-        if (!pet) return; // <-- ADICIONE ISSO: Escudo do Pet
+        if (!pet) return;
 
         const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
-        if (!cliente) return; // <-- ADICIONE ISSO: Escudo do Cliente
+        if (!cliente) return;
 
         const temAlerta = pet.observacoes && pet.observacoes.trim() !== '';
-        // ... continua o código
-
         const nomeSeguro = escaparHTML(pet.nome);
         const racaSegura = escaparHTML(pet.raca);
         const servicoSeguro = escaparHTML(atendimento.servico);
@@ -218,28 +216,25 @@ function inicializarFormulario() {
         renderizarPetsCadastrados();
     });
 }
-// --- 8. LISTAGEM DE PETS CADASTRADOS (COM BUSCA E CRUD) ---
+
 function renderizarPetsCadastrados(filtro = '') {
     const container = document.getElementById('lista-pets');
-    let htmlCadastrados = ''; // Variável para performance (evita o += direto na tela)
+    let htmlCadastrados = '';
 
-    // Filtra os pets pelo nome do animal ou nome do dono
     const petsFiltrados = DB_PETSHUB.pets.filter(pet => {
         const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
-        if (!cliente) return false; // <-- ADICIONE ISSO: Escudo da Pesquisa
+        if (!cliente) return false;
         
         const termoBusca = filtro.toLowerCase();
-        // ... continua o código
         const nomePetMatch = pet.nome.toLowerCase().includes(termoBusca);
         const nomeTutorMatch = cliente.nome.toLowerCase().includes(termoBusca);
         
-        return nomePetMatch || nomeTutorMatch; // Retorna se achar no pet OU no dono
+        return nomePetMatch || nomeTutorMatch;
     });
 
     petsFiltrados.forEach(pet => {
         const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
         
-        // Note que também usamos o escaparHTML aqui para manter a segurança em todas as telas
         htmlCadastrados += `
             <div class="pet-card">
                 <h4>${escaparHTML(pet.nome)} <span class="badge-raca">(${escaparHTML(pet.raca)})</span></h4>
@@ -257,7 +252,6 @@ function renderizarPetsCadastrados(filtro = '') {
 
     container.innerHTML = htmlCadastrados;
 }
-// --- ATIVAR A BARRA DE PESQUISA (Escuta a digitação em tempo real) ---
 document.getElementById('input-busca').addEventListener('input', function(e) {
     const textoDigitado = e.target.value;
     renderizarPetsCadastrados(textoDigitado);
@@ -302,37 +296,30 @@ document.querySelector('.nav-link[data-target="view-cadastro"]').addEventListene
     }
 });
 
-// --- 11. SISTEMA DE MODAL E EXCLUSÃO (POP-UP CUSTOMIZADO) ---
-let idPetParaExcluir = null; // Variável que "lembra" qual cachorro clicamos para excluir
+let idPetParaExcluir = null;
 
 function abrirModalExclusao(petId) {
     idPetParaExcluir = petId;
     const pet = DB_PETSHUB.pets.find(p => p.id === petId);
     
-    // Altera o texto do modal dinamicamente para o nome do cachorro
     document.getElementById('modal-mensagem').innerHTML = `Tem certeza que deseja excluir o cadastro de <strong>${escaparHTML(pet.nome)}</strong>? O histórico de banhos também será apagado.`;
     
-    // Remove a classe 'hidden', fazendo o modal aparecer na tela
     document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
 function fecharModal() {
     document.getElementById('modal-overlay').classList.add('hidden');
-    idPetParaExcluir = null; // Limpa a memória por segurança
+    idPetParaExcluir = null;
 }
 
-// Escuta os cliques nos botões do modal
 document.getElementById('btn-modal-cancelar').addEventListener('click', fecharModal);
 
 document.getElementById('btn-modal-confirmar').addEventListener('click', function() {
     if (idPetParaExcluir !== null) {
-        // 1. Remove primeiro todos os atendimentos atrelados a este pet (Integridade Relacional)
         DB_PETSHUB.atendimentos = DB_PETSHUB.atendimentos.filter(a => a.petId !== idPetParaExcluir);
         
-        // 2. Remove o pet do banco de dados
         DB_PETSHUB.pets = DB_PETSHUB.pets.filter(p => p.id !== idPetParaExcluir);
         
-        // 3. Salva no navegador, fecha o modal e atualiza as telas
         DB_PETSHUB.salvar();
         fecharModal();
         renderizarPetsCadastrados();
@@ -340,9 +327,7 @@ document.getElementById('btn-modal-confirmar').addEventListener('click', functio
     }
 });
 
-// --- 12. FUNÇÃO EDITAR ---
 function editarPet(petId) {
-    // Por enquanto, apenas um alerta visual para estruturarmos depois
     alert(`Preparando formulário para edição do pet ID ${petId}. Em breve!`);
 }
 

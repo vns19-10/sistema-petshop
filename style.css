@@ -165,21 +165,15 @@ fieldset {
     font-size: 0.9rem;
 }
 
-/* =========================================
-   SOFISTICAÇÃO E NOVOS COMPONENTES (UP UI)
-   ========================================= */
-
-/* 1. Efeito Hover (Interatividade) nos Cartões */
 .pet-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .pet-card:hover {
-    transform: translateY(-4px); /* Faz o cartão "flutuar" levemente para cima */
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Aumenta a sombra criando profundidade */
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-/* 2. Estilização da Barra de Pesquisa */
 .busca-container {
     margin-top: 20px;
     margin-bottom: 10px;
@@ -200,7 +194,6 @@ fieldset {
     border-color: var(--primary-color);
 }
 
-/* 3. Novos Botões para a Aba de Cadastros (CRUD) */
 .btn-group {
     display: flex;
     gap: 10px;
@@ -208,7 +201,7 @@ fieldset {
 }
 
 .btn-editar, .btn-excluir {
-    flex: 1; /* Faz os botões dividirem o espaço igualmente */
+    flex: 1;
     padding: 8px;
     border: none;
     border-radius: 4px;
@@ -219,7 +212,7 @@ fieldset {
 }
 
 .btn-editar {
-    background-color: #64748b; /* Cinza azulado elegante */
+    background-color: #64748b;
 }
 .btn-editar:hover { background-color: #475569; }
 
@@ -228,18 +221,17 @@ fieldset {
 }
 .btn-excluir:hover { background-color: #dc2626; }
 
-/* 4. Estilização do Modal (Pop-up Customizado) */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(15, 23, 42, 0.7); /* Fundo escuro semi-transparente */
+    background-color: rgba(15, 23, 42, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Garante que fique por cima de tudo */
+    z-index: 9999;
     opacity: 1;
     transition: opacity 0.2s ease;
 }
