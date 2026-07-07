@@ -168,50 +168,80 @@ function inicializarFormulario() {
         const valor = parseFloat(document.getElementById('servico-valor').value);
         const observacoes = document.getElementById('pet-obs').value.trim();
 
-        if (!nomeTutor || !telTutor || !nomePet || !racaPet || !servico || isNaN(valor)) {
-            alert("Por favor, preencha todos os campos obrigatórios.");
+        const modoEdicao = form.dataset.modoEdicao === 'true';
+
+        if (!nomeTutor || !telTutor || !nomePet || !racaPet) {
+            alert("Por favor, preencha os dados do tutor e do pet.");
+            return;
+        }
+        if (!modoEdicao && (!servico || isNaN(valor))) {
+            alert("Por favor, preencha os dados do serviço obrigatórios.");
             return;
         }
 
         let clienteAtualId = form.dataset.clienteId ? parseInt(form.dataset.clienteId) : null;
         let petAtualId = form.dataset.petId ? parseInt(form.dataset.petId) : null;
 
-        if (!petAtualId) {
-            clienteAtualId = DB_PETSHUB.clientes.length > 0 ? Math.max(...DB_PETSHUB.clientes.map(c => c.id)) + 1 : 1;
-            petAtualId = DB_PETSHUB.pets.length > 0 ? Math.max(...DB_PETSHUB.pets.map(p => p.id)) + 1 : 1;
+        if (modoEdicao) {
+            const clienteEditado = DB_PETSHUB.clientes.find(c => c.id === clienteAtualId);
+            const petEditado = DB_PETSHUB.pets.find(p => p.id === petAtualId);
 
-            DB_PETSHUB.clientes.push({ id: clienteAtualId, nome: nomeTutor, telefone: telTutor });
-            DB_PETSHUB.pets.push({ id: petAtualId, clienteId: clienteAtualId, nome: nomePet, raca: racaPet, observacoes: observacoes });
+            if (clienteEditado) {
+                clienteEditado.nome = nomeTutor;
+                clienteEditado.telefone = telTutor;
+            }
+            if (petEditado) {
+                petEditado.nome = nomePet;
+                petEditado.raca = racaPet;
+                petEditado.observacoes = observacoes;
+            }
+
+            DB_PETSHUB.salvar();
+            alert(`Cadastro de ${nomePet} atualizado com sucesso!`);
+            
+            document.querySelector('.nav-link[data-target="view-cadastrados"]').click();
+
         } else {
-            const petExistente = DB_PETSHUB.pets.find(p => p.id === petAtualId);
-            if (petExistente) petExistente.observacoes = observacoes;
+            if (!petAtualId) {
+                clienteAtualId = DB_PETSHUB.clientes.length > 0 ? Math.max(...DB_PETSHUB.clientes.map(c => c.id)) + 1 : 1;
+                petAtualId = DB_PETSHUB.pets.length > 0 ? Math.max(...DB_PETSHUB.pets.map(p => p.id)) + 1 : 1;
+
+                DB_PETSHUB.clientes.push({ id: clienteAtualId, nome: nomeTutor, telefone: telTutor });
+                DB_PETSHUB.pets.push({ id: petAtualId, clienteId: clienteAtualId, nome: nomePet, raca: racaPet, observacoes: observacoes });
+            } else {
+                const petExistente = DB_PETSHUB.pets.find(p => p.id === petAtualId);
+                if (petExistente) petExistente.observacoes = observacoes;
+            }
+
+            const novoAtendimentoId = DB_PETSHUB.atendimentos.length > 0 ? Math.max(...DB_PETSHUB.atendimentos.map(a => a.id)) + 1 : 1;
+            DB_PETSHUB.atendimentos.push({
+                id: novoAtendimentoId,
+                petId: petAtualId,
+                servico: servico,
+                valor: valor,
+                status: 'Fila',
+                data: new Date()
+            });
+
+            DB_PETSHUB.salvar();
+            alert(`Serviço para ${nomePet} registrado com sucesso!`);
+            document.querySelector('.nav-link[data-target="view-dashboard"]').click();
         }
-
-        const novoAtendimentoId = DB_PETSHUB.atendimentos.length > 0 ? Math.max(...DB_PETSHUB.atendimentos.map(a => a.id)) + 1 : 1;
-        
-        DB_PETSHUB.atendimentos.push({
-            id: novoAtendimentoId,
-            petId: petAtualId,
-            servico: servico,
-            valor: valor,
-            status: 'Fila',
-            data: new Date()
-        });
-
-        DB_PETSHUB.salvar();
 
         form.reset();
         form.removeAttribute('data-pet-id');
         form.removeAttribute('data-cliente-id');
+        form.removeAttribute('data-modo-edicao');
+        
+        document.getElementById('servico-tipo').parentElement.style.display = 'block';
+        document.getElementById('servico-valor').parentElement.style.display = 'block';
+        document.querySelector('#form-checkin .btn-submit').textContent = "Dar Entrada na Fila";
+        
         ['tutor-nome', 'tutor-telefone', 'pet-nome', 'pet-raca'].forEach(id => {
             document.getElementById(id).readOnly = false;
             document.getElementById(id).style.backgroundColor = '';
         });
 
-        alert(`Serviço para ${nomePet} registrado com sucesso!`);
-        
-        document.querySelector('.nav-link[data-target="view-dashboard"]').click();
-        
         renderizarKanban();
         renderizarPetsCadastrados();
     });
@@ -284,15 +314,24 @@ function prepararNovoAtendimento(petId) {
     document.querySelector('.nav-link[data-target="view-cadastro"]').click();
 }
 
-document.querySelector('.nav-link[data-target="view-cadastro"]').addEventListener('click', () => {
+document.querySelector('.nav-link[data-target="view-cadastro"]').addEventListener('click', (evento) => {
     const form = document.getElementById('form-checkin');
     
-    if (!form.dataset.petId) {
+    if (evento.isTrusted) {
         form.reset();
+        form.removeAttribute('data-pet-id');
+        form.removeAttribute('data-cliente-id');
+        form.removeAttribute('data-modo-edicao');
+
+        document.getElementById('servico-tipo').parentElement.style.display = 'block';
+        document.getElementById('servico-valor').parentElement.style.display = 'block';
+
         ['tutor-nome', 'tutor-telefone', 'pet-nome', 'pet-raca'].forEach(id => {
             document.getElementById(id).readOnly = false;
             document.getElementById(id).style.backgroundColor = '';
         });
+
+        document.querySelector('#form-checkin .btn-submit').textContent = "Dar Entrada na Fila";
     }
 });
 
@@ -328,7 +367,35 @@ document.getElementById('btn-modal-confirmar').addEventListener('click', functio
 });
 
 function editarPet(petId) {
-    alert(`Preparando formulário para edição do pet ID ${petId}. Em breve!`);
+    const pet = DB_PETSHUB.pets.find(p => p.id === petId);
+    if (!pet) return;
+    
+    const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
+    if (!cliente) return;
+
+    const form = document.getElementById('form-checkin');
+
+    document.getElementById('tutor-nome').value = cliente.nome;
+    document.getElementById('tutor-telefone').value = cliente.telefone;
+    document.getElementById('pet-nome').value = pet.nome;
+    document.getElementById('pet-raca').value = pet.raca;
+    document.getElementById('pet-obs').value = pet.observacoes || '';
+
+    ['tutor-nome', 'tutor-telefone', 'pet-nome', 'pet-raca'].forEach(id => {
+        document.getElementById(id).readOnly = false;
+        document.getElementById(id).style.backgroundColor = '';
+    });
+
+    document.getElementById('servico-tipo').parentElement.style.display = 'none';
+    document.getElementById('servico-valor').parentElement.style.display = 'none';
+
+    form.dataset.petId = pet.id;
+    form.dataset.clienteId = cliente.id;
+    form.dataset.modoEdicao = 'true';
+
+    document.querySelector('#form-checkin .btn-submit').textContent = "Salvar Alterações";
+
+    document.querySelector('.nav-link[data-target="view-cadastro"]').click();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
