@@ -398,30 +398,40 @@ function editarPet(petId) {
     document.querySelector('.nav-link[data-target="view-cadastro"]').click();
 }
 
-document.getElementById('btn-cancelar').addEventListener('click', () => {
-    const form = document.getElementById('form-checkin');
-    
-    const estavaEditando = form.dataset.modoEdicao === 'true' || form.dataset.petId;
-
-    form.reset();
-    form.removeAttribute('data-pet-id');
-    form.removeAttribute('data-cliente-id');
-    form.removeAttribute('data-modo-edicao');
-
-    document.getElementById('servico-tipo').parentElement.style.display = 'block';
-    document.getElementById('servico-valor').parentElement.style.display = 'block';
-    document.querySelector('#form-checkin .btn-submit').textContent = "Dar Entrada na Fila";
-
-    ['tutor-nome', 'tutor-telefone', 'pet-nome', 'pet-raca'].forEach(id => {
-        document.getElementById(id).readOnly = false;
+const inputBusca = document.getElementById('input-busca');
+if (inputBusca) {
+    inputBusca.addEventListener('input', function(e) {
+        const textoDigitado = e.target.value;
+        renderizarPetsCadastrados(textoDigitado);
     });
+}
 
-    if (estavaEditando) {
-        document.querySelector('.nav-link[data-target="view-cadastrados"]').click();
-    } else {
-        document.querySelector('.nav-link[data-target="view-dashboard"]').click();
-    }
-});
+const btnCancelar = document.getElementById('btn-cancelar');
+if (btnCancelar) {
+    btnCancelar.addEventListener('click', () => {
+        const form = document.getElementById('form-checkin');
+        const estavaEditando = form.dataset.modoEdicao === 'true' || form.dataset.petId;
+
+        form.reset();
+        form.removeAttribute('data-pet-id');
+        form.removeAttribute('data-cliente-id');
+        form.removeAttribute('data-modo-edicao');
+
+        document.getElementById('servico-tipo').parentElement.style.display = 'block';
+        document.getElementById('servico-valor').parentElement.style.display = 'block';
+        document.querySelector('#form-checkin .btn-submit').textContent = "Dar Entrada na Fila";
+
+        ['tutor-nome', 'tutor-telefone', 'pet-nome', 'pet-raca'].forEach(id => {
+            document.getElementById(id).readOnly = false;
+        });
+
+        if (estavaEditando) {
+            document.querySelector('.nav-link[data-target="view-cadastrados"]').click();
+        } else {
+            document.querySelector('.nav-link[data-target="view-dashboard"]').click();
+        }
+    });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     carregarDadosIniciais();
