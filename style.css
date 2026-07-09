@@ -283,3 +283,39 @@ fieldset {
     color: white;
 }
 .btn-perigo:hover { background-color: #dc2626; }
+
+#lista-pets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.form-actions button {
+    flex: 1;
+    padding: 12px;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.btn-submit {
+    background-color: var(--primary-color);
+    color: white;
+}
+.btn-submit:hover { background-color: var(--primary-hover); }
+
+input[readonly], textarea[readonly] {
+    background-color: #e2e8f0;
+    color: #64748b;
+    cursor: not-allowed;
+    border-color: #cbd5e1;
+}
