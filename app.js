@@ -90,25 +90,16 @@ function renderizarKanban() {
         const tutorSeguro = escaparHTML(cliente.nome);
         const obsSegura = temAlerta ? escaparHTML(pet.observacoes) : '';
 
+        const classeBadge = servicoSeguro === 'Banho Simples' ? 'badge-banho' : 
+                            servicoSeguro === 'Banho e Tosa Higiênica' ? 'badge-tosa' : 
+                            'badge-completo';
+
         const cardHTML = `
-            <div class="pet-card ${temAlerta ? 'tem-alerta' : ''}" role="listitem">
-                <h4>${nomeSeguro} <span class="badge-raca">(${racaSegura})</span></h4>
-                <p><strong>Serviço:</strong> ${servicoSeguro}</p>
-                <p><strong>Tutor:</strong> ${tutorSeguro} - ${escaparHTML(cliente.telefone)}</p>
-                
-                ${temAlerta ? `<p class="txt-alerta">⚠️ <strong>Restrição:</strong> ${obsSegura}</p>` : ''}
-                
-                <div class="card-actions">
-                    ${atendimento.status === 'Fila' ? 
-                        `<button onclick="mudarStatusAtendimento(${atendimento.id}, 'Andamento')">Iniciar Banho ➔</button>` : ''}
-                    
-                    ${atendimento.status === 'Andamento' ? 
-                        `<button onclick="mudarStatusAtendimento(${atendimento.id}, 'Pronto')">Finalizar ➔</button>` : ''}
-                    
-                    ${atendimento.status === 'Pronto' ? 
-                        `<span class="txt-concluido">✓ Pronto para Retirada</span>
-                         <button onclick="entregarPet(${atendimento.id})" style="background-color: #e53e3e; margin-top: 10px;">Entregar Pet ➔</button>` : ''}
-                </div>
+            <div class="kanban-card ${temAlerta ? 'tem-alerta' : ''}" draggable="true" data-id="${atendimento.id}">
+                <h4>${nomeSeguro}</h4>
+                <p><small>Tutor: ${tutorSeguro}</small></p>
+                ${temAlerta ? `<p style="font-size: 0.8rem; color: #ef4444; margin-top: 6px; font-weight: 500;">⚠️ ${obsSegura}</p>` : ''}
+                <span class="badge-servico ${classeBadge}">${servicoSeguro}</span>
             </div>
         `;
 
@@ -433,10 +424,52 @@ if (btnCancelar) {
     });
 }
 
+let cardArrastadoId = null;
+
+function inicializarDragAndDrop() {
+    const colunas = document.querySelectorAll('.kanban-coluna');
+    const tabuleiro = document.querySelector('.kanban-board');
+
+    if (!tabuleiro) return;
+
+    tabuleiro.addEventListener('dragstart', (e) => {
+        const card = e.target.closest('.kanban-card');
+        if (card) {
+            cardArrastadoId = card.dataset.id;
+            card.style.opacity = '0.5';
+        }
+    });
+
+    tabuleiro.addEventListener('dragend', (e) => {
+        const card = e.target.closest('.kanban-card');
+        if (card) card.style.opacity = '1';
+        colunas.forEach(col => col.classList.remove('drag-over'));
+    });
+
+    colunas.forEach(coluna => {
+        coluna.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            coluna.classList.add('drag-over');
+        });
+
+        coluna.addEventListener('dragleave', () => {
+            coluna.classList.remove('drag-over');
+        });
+
+        coluna.addEventListener('drop', () => {
+            const novoStatus = coluna.dataset.status;
+            if (cardArrastadoId && novoStatus) {
+                mudarStatusAtendimento(parseInt(cardArrastadoId), novoStatus);
+            }
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     carregarDadosIniciais();
     inicializarRotas();
     renderizarKanban();
     renderizarPetsCadastrados();
     inicializarFormulario();
+    inicializarDragAndDrop();
 });

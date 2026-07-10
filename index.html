@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pet's Hub - Sistema Operacional</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <header class="main-header">
-        <h1>Pet's Hub</h1>
+        <div class="logo-container">
+            <span class="logo-icon">🐾</span>
+            <h1>Pet's Hub <span class="logo-badge">Pro</span></h1>
+        </div>
         <nav aria-label="Navegação principal">
             <ul>
                 <li><a href="#dashboard" class="nav-link active" data-target="view-dashboard">Painel Kanban</a></li>
@@ -25,17 +31,17 @@
             <h2>Esteira de Produção (Banho & Tosa)</h2>
             <div class="kanban-board">
                 
-                <article class="kanban-column" id="col-fila">
+                <article class="kanban-column kanban-coluna" id="col-fila" data-status="Fila">
                     <h3>Em Espera (<span id="count-fila">0</span>)</h3>
                     <div class="cards-container" id="container-fila" role="list"></div>
                 </article>
 
-                <article class="kanban-column" id="col-andamento">
+                <article class="kanban-column kanban-coluna" id="col-andamento" data-status="Andamento">
                     <h3>Em Atendimento (<span id="count-andamento">0</span>)</h3>
                     <div class="cards-container" id="container-andamento" role="list"></div>
                 </article>
 
-                <article class="kanban-column" id="col-pronto">
+                <article class="kanban-column kanban-coluna" id="col-pronto" data-status="Pronto">
                     <h3>Concluído (<span id="count-pronto">0</span>)</h3>
                     <div class="cards-container" id="container-pronto" role="list"></div>
                 </article>
