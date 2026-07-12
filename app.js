@@ -101,7 +101,10 @@ function renderizarKanban() {
                 ${temAlerta ? `<p style="font-size: 0.8rem; color: #ef4444; margin-top: 6px; font-weight: 500;">⚠️ ${obsSegura}</p>` : ''}
                 <span class="badge-servico ${classeBadge}">${servicoSeguro}</span>
                 
-                ${atendimento.status === 'Pronto' ? `<button onclick="entregarPet(${atendimento.id})" class="btn-submit" style="margin-top: 12px; padding: 8px; font-size: 0.85rem;">🐾 Entregar Pet</button>` : ''}
+                <div class="acoes-card" style="margin-top: 12px; display: flex; gap: 8px;">
+                    ${atendimento.status === 'Fila' ? `<button onclick="cancelarAtendimento(${atendimento.id})" class="btn-excluir" style="flex: 1; padding: 6px; font-size: 0.8rem; border-radius: 4px;">❌ Cancelar</button>` : ''}
+                    ${atendimento.status === 'Pronto' ? `<button onclick="entregarPet(${atendimento.id})" class="btn-submit" style="flex: 1; padding: 6px; font-size: 0.8rem; border-radius: 4px;">🐾 Entregar</button>` : ''}
+                </div>
             </div>
         `;
 
@@ -133,29 +136,106 @@ function renderizarDashboard() {
     let qtdFila = 0;
     let qtdConcluidos = 0;
 
+    let countBanho = 0;
+    let countTosaHig = 0;
+    let countCompleta = 0;
+
     DB_PETSHUB.atendimentos.forEach(atendimento => {
         if (atendimento.status === 'Fila') {
             qtdFila++;
         } else if (atendimento.status === 'Pronto' || atendimento.status === 'Entregue') {
             qtdConcluidos++;
-            faturamento += atendimento.valor;
+            
+            faturamento += parseFloat(atendimento.valor) || 0;
+            
+            if (atendimento.servico === 'Banho Simples') countBanho++;
+            else if (atendimento.servico === 'Banho e Tosa Higiênica') countTosaHig++;
+            else if (atendimento.servico === 'Banho e Tosa Completa') countCompleta++;
         }
     });
 
     document.getElementById('dash-faturamento').textContent = `R$ ${faturamento.toFixed(2).replace('.', ',')}`;
     document.getElementById('dash-fila').textContent = qtdFila;
     document.getElementById('dash-concluidos').textContent = qtdConcluidos;
-}
 
-function mudarStatusAtendimento(atendimentoId, novoStatus) {
-    const atendimento = DB_PETSHUB.atendimentos.find(a => a.id === atendimentoId);
-    
-    if (atendimento) {
-        atendimento.status = novoStatus;
+    try {
+        const ctx = document.getElementById('graficoServicos');
+        if (!ctx) return;
+
+        if (meuGrafico) {
+            meuGrafico.data.datasets[0].data = [countBanho, countTosaHig, countCompleta];
+            meuGrafico.update();
+        } else {
+            meuGrafico = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Banho Simples', 'Tosa Higiênica', 'Tosa Completa'],
+                    datasets: [{
+                        data: [countBanho, countTosaHig, countCompleta],
+                        backgroundColor: ['#0ea5e9', '#f59e0b', '#10b981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+        }
+    } catch (erro) {
+        console.warn("Aguardando tela visível para renderizar o gráfico.");
+    }
+
+    const gastosPorPet = {};
+
+    DB_PETSHUB.atendimentos.forEach(atendimento => {
+        if (atendimento.status === 'Pronto' || atendimento.status === 'Entregue') {
+            const petId = atendimento.petId;
+            const valor = parseFloat(atendimento.valor) || 0;
+            
+            if (!gastosPorPet[petId]) {
+                gastosPorPet[petId] = 0;
+            }
+            gastosPorPet[petId] += valor;
+        }
+    });
+
+    const ranking = Object.keys(gastosPorPet).map(petId => {
+        return {
+            petId: parseInt(petId),
+            totalGasto: gastosPorPet[petId]
+        };
+    }).sort((a, b) => b.totalGasto - a.totalGasto).slice(0, 5);
+
+    const tbodyRanking = document.getElementById('dash-ranking-body');
+    if (tbodyRanking) {
+        let htmlRanking = '';
         
-        DB_PETSHUB.salvar();
-        
-        renderizarKanban();
+        if (ranking.length === 0) {
+            htmlRanking = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #64748b;">Nenhum faturamento registrado ainda.</td></tr>';
+        } else {
+            ranking.forEach((item, index) => {
+                const pet = DB_PETSHUB.pets.find(p => p.id === item.petId);
+                if (!pet) return;
+                const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
+                
+                let medalha = `${index + 1}º`;
+                if (index === 0) medalha = '🥇 1º';
+                if (index === 1) medalha = '🥈 2º';
+                if (index === 2) medalha = '🥉 3º';
+
+                htmlRanking += `
+                    <tr style="border-bottom: 1px solid var(--border-color); transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 12px 10px; font-weight: bold; color: var(--text-color);">${medalha}</td>
+                        <td style="padding: 12px 10px;">${escaparHTML(pet.nome)} <span style="font-size: 0.8rem; color: #64748b;">(${escaparHTML(pet.raca)})</span></td>
+                        <td style="padding: 12px 10px;">${escaparHTML(cliente ? cliente.nome : 'Desconhecido')}</td>
+                        <td style="padding: 12px 10px; font-weight: bold; color: var(--success-color);">R$ ${item.totalGasto.toFixed(2).replace('.', ',')}</td>
+                    </tr>
+                `;
+            });
+        }
+        tbodyRanking.innerHTML = htmlRanking;
     }
 }
 
@@ -163,6 +243,15 @@ function entregarPet(atendimentoId) {
     const atendimento = DB_PETSHUB.atendimentos.find(a => a.id === atendimentoId);
     if (atendimento) {
         atendimento.status = 'Entregue';
+        DB_PETSHUB.salvar();
+        renderizarKanban();
+    }
+}
+
+function cancelarAtendimento(atendimentoId) {
+    if (confirm("Tem certeza que deseja cancelar e remover este serviço da fila? (O cadastro do pet continuará salvo no sistema)")) {
+        DB_PETSHUB.atendimentos = DB_PETSHUB.atendimentos.filter(a => a.id !== atendimentoId);
+        
         DB_PETSHUB.salvar();
         renderizarKanban();
     }
@@ -284,7 +373,10 @@ function renderizarPetsCadastrados(filtro = '') {
                 <h4>${escaparHTML(pet.nome)} <span class="badge-raca">(${escaparHTML(pet.raca)})</span></h4>
                 <p><strong>Tutor:</strong> ${escaparHTML(cliente.nome)}</p>
                 <p><strong>Telefone:</strong> ${escaparHTML(cliente.telefone)}</p>
-                <button onclick="prepararNovoAtendimento(${pet.id})" style="margin-top: 10px; width: 100%;">+ Novo Atendimento</button>
+                
+                <button onclick="prepararNovoAtendimento(${pet.id})" style="margin-top: 15px; width: 100%; padding: 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-weight: bold; color: var(--text-color); transition: 0.2s;">+ Novo Atendimento</button>
+                
+                <button onclick="abrirModalHistorico(${pet.id})" style="margin-top: 8px; width: 100%; padding: 8px; background: white; border: 1px solid var(--primary-color); border-radius: 4px; cursor: pointer; font-weight: bold; color: var(--primary-color); transition: 0.2s;">📋 Ver Histórico</button>
                 
                 <div class="btn-group">
                     <button class="btn-editar" onclick="editarPet(${pet.id})">✏️ Editar</button>
@@ -350,6 +442,7 @@ document.querySelector('.nav-link[data-target="view-cadastro"]').addEventListene
 });
 
 let idPetParaExcluir = null;
+let meuGrafico = null;
 
 function abrirModalExclusao(petId) {
     idPetParaExcluir = petId;
@@ -447,6 +540,18 @@ if (btnCancelar) {
     });
 }
 
+function mudarStatusAtendimento(atendimentoId, novoStatus) {
+    const atendimento = DB_PETSHUB.atendimentos.find(a => a.id === atendimentoId);
+    
+    if (atendimento) {
+        atendimento.status = novoStatus;
+        
+        DB_PETSHUB.salvar();
+        
+        renderizarKanban();
+    }
+}
+
 let cardArrastadoId = null;
 
 function inicializarDragAndDrop() {
@@ -486,6 +591,62 @@ function inicializarDragAndDrop() {
             }
         });
     });
+}
+
+function abrirModalHistorico(petId) {
+    const pet = DB_PETSHUB.pets.find(p => p.id === petId);
+    if (!pet) return;
+
+    const atendimentosDoPet = DB_PETSHUB.atendimentos.filter(a => a.petId === petId);
+    
+    let totalVisitas = 0;
+    let totalGasto = 0;
+    let htmlTabela = '';
+
+    if (atendimentosDoPet.length === 0) {
+        htmlTabela = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #64748b;">Nenhum atendimento registrado ainda.</td></tr>';
+    } else {
+        [...atendimentosDoPet].reverse().forEach(atendimento => {
+            totalVisitas++;
+            
+            if (atendimento.status === 'Pronto' || atendimento.status === 'Entregue') {
+                totalGasto += parseFloat(atendimento.valor) || 0;
+            }
+
+            let dataFormatada = "--/--/----";
+            if (atendimento.data) {
+                const dataObj = new Date(atendimento.data);
+                dataFormatada = dataObj.toLocaleDateString('pt-BR');
+            }
+
+            let corStatus = atendimento.status === 'Fila' ? '#f59e0b' : 
+                            atendimento.status === 'Andamento' ? '#0ea5e9' : '#10b981';
+
+            htmlTabela += `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px 8px; font-size: 0.9rem;">${dataFormatada}</td>
+                    <td style="padding: 12px 8px; font-size: 0.9rem;">${escaparHTML(atendimento.servico)}</td>
+                    <td style="padding: 12px 8px; font-size: 0.9rem; font-weight: bold;">R$ ${(parseFloat(atendimento.valor) || 0).toFixed(2).replace('.', ',')}</td>
+                    <td style="padding: 12px 8px; font-size: 0.9rem;">
+                        <span style="background: ${corStatus}20; color: ${corStatus}; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">
+                            ${atendimento.status}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById('hist-nome-pet').textContent = `🐾 Histórico: ${pet.nome}`;
+    document.getElementById('hist-visitas').textContent = totalVisitas;
+    document.getElementById('hist-gasto').textContent = `R$ ${totalGasto.toFixed(2).replace('.', ',')}`;
+    document.getElementById('hist-lista-servicos').innerHTML = htmlTabela;
+
+    document.getElementById('modal-historico').classList.remove('hidden');
+}
+
+function fecharModalHistorico() {
+    document.getElementById('modal-historico').classList.add('hidden');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

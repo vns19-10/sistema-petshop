@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -73,7 +74,33 @@
                 <h4>✅ Concluídos & Entregues</h4>
                 <p id="dash-concluidos">0</p>
             </div>
+            
+            <div class="dashboard-graficos" style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+                <h3 style="margin-bottom: 15px; color: #1e293b; font-size: 1.1rem;">Distribuição de Serviços</h3>
+                <div style="position: relative; height: 300px; width: 100%; display: flex; justify-content: center;">
+                    <canvas id="graficoServicos"></canvas>
+                </div>
 
+            <div class="dashboard-ranking" style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+                <h3 style="margin-bottom: 15px; color: #1e293b; font-size: 1.1rem;">🏆 Top 5 Pets (Curva ABC de Faturamento)</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="padding: 10px; color: #64748b;">Posição</th>
+                                <th style="padding: 10px; color: #64748b;">Pet</th>
+                                <th style="padding: 10px; color: #64748b;">Tutor</th>
+                                <th style="padding: 10px; color: #64748b;">Total Gasto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dash-ranking-body">
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            </div>
         </div>
     </div>
 </section>
@@ -156,6 +183,41 @@
             <div class="modal-actions">
                 <button id="btn-modal-cancelar" class="btn-secundario">Cancelar</button>
                 <button id="btn-modal-confirmar" class="btn-perigo">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-historico" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal-box" style="max-width: 600px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 id="hist-nome-pet" style="margin: 0; color: var(--primary-color);">Histórico do Pet</h3>
+                <button onclick="fecharModalHistorico()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="flex: 1;">
+                    <p style="font-size: 0.85rem; color: #64748b; margin:0; text-transform: uppercase; font-weight: bold;">Visitas Totais</p>
+                    <p id="hist-visitas" style="font-size: 1.8rem; font-weight: bold; margin:0; color: var(--text-color);">0</p>
+                </div>
+                <div style="flex: 1;">
+                    <p style="font-size: 0.85rem; color: #64748b; margin:0; text-transform: uppercase; font-weight: bold;">Gasto Total (LTV)</p>
+                    <p id="hist-gasto" style="font-size: 1.8rem; font-weight: bold; margin:0; color: var(--success-color);">R$ 0,00</p>
+                </div>
+            </div>
+
+            <div style="max-height: 250px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead style="position: sticky; top: 0; background: white;">
+                        <tr style="border-bottom: 2px solid var(--border-color);">
+                            <th style="padding: 8px; color: #64748b; font-size: 0.9rem;">Data</th>
+                            <th style="padding: 8px; color: #64748b; font-size: 0.9rem;">Serviço</th>
+                            <th style="padding: 8px; color: #64748b; font-size: 0.9rem;">Valor</th>
+                            <th style="padding: 8px; color: #64748b; font-size: 0.9rem;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hist-lista-servicos">
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
