@@ -437,3 +437,110 @@ body, input, select, button, textarea {
     font-weight: bold;
     color: var(--text-color);
 }
+
+@media (max-width: 768px) {
+    .main-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    .main-header nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    .dashboard-cards {
+        flex-direction: column;
+    }
+    .form-actions {
+        flex-direction: column;
+    }
+    .kanban-board {
+        flex-direction: column;
+    }
+    .kanban-column {
+        min-width: 100%;
+        margin-bottom: 10px;
+    }
+    .app-view {
+        padding: 10px;
+    }
+    .modal-box {
+        padding: 15px;
+    }
+}
+
+:root[data-theme="dark"] {
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
+    --text-color: #f8fafc;
+    --border-color: #334155;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] .app-view {
+    background-color: var(--bg-main) !important;
+}
+
+[data-theme="dark"] .pet-card,
+[data-theme="dark"] .kanban-card,
+[data-theme="dark"] .card-resumo,
+[data-theme="dark"] .dashboard-graficos,
+[data-theme="dark"] .dashboard-ranking,
+[data-theme="dark"] fieldset,
+[data-theme="dark"] .modal-box,
+[data-theme="dark"] #input-busca {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .kanban-column {
+    background-color: var(--bg-card) !important;
+}
+
+[data-theme="dark"] .card-resumo h4,
+[data-theme="dark"] .dashboard-graficos h3,
+[data-theme="dark"] .dashboard-ranking h3,
+[data-theme="dark"] table th,
+[data-theme="dark"] table td,
+[data-theme="dark"] p {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] input, 
+[data-theme="dark"] select, 
+[data-theme="dark"] textarea {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] input:focus, 
+[data-theme="dark"] select:focus, 
+[data-theme="dark"] textarea:focus {
+    border-color: var(--primary-color) !important;
+    outline: none;
+}
+
+[data-theme="dark"] thead tr {
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #dash-ranking-body tr {
+    background-color: transparent !important; 
+}
+
+[data-theme="dark"] #dash-ranking-body tr:hover {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] button[style*="background: white"] {
+    background: #0f172a !important;
+    color: var(--text-color) !important;
+}
+[data-theme="dark"] button[style*="background: #f8fafc"] {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+    color: var(--text-color) !important;
+}

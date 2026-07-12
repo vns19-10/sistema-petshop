@@ -649,8 +649,47 @@ function fecharModalHistorico() {
     document.getElementById('modal-historico').classList.add('hidden');
 }
 
+function inicializarTema() {
+    const btnToggle = document.getElementById('btn-theme-toggle');
+    const root = document.documentElement;
+
+    const temaSalvo = localStorage.getItem('ph_tema') || 'light';
+    
+    if (temaSalvo === 'dark') {
+        root.setAttribute('data-theme', 'dark');
+        btnToggle.innerHTML = '<span id="theme-icon">☀️</span> Claro';
+    }
+
+    btnToggle.addEventListener('click', () => {
+        const temaAtual = root.getAttribute('data-theme');
+        
+        if (temaAtual === 'dark') {
+            root.removeAttribute('data-theme');
+            localStorage.setItem('ph_tema', 'light');
+            btnToggle.innerHTML = '<span id="theme-icon">🌙</span> Escuro';
+            
+            if (meuGrafico) {
+                Chart.defaults.color = '#64748b';
+                meuGrafico.update();
+            }
+        } else {
+            root.setAttribute('data-theme', 'dark');
+            localStorage.setItem('ph_tema', 'dark');
+            btnToggle.innerHTML = '<span id="theme-icon">☀️</span> Claro';
+            
+            if (meuGrafico) {
+                Chart.defaults.color = '#cbd5e1';
+                meuGrafico.update();
+            }
+        }
+    });
+    
+    Chart.defaults.color = temaSalvo === 'dark' ? '#cbd5e1' : '#64748b';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     carregarDadosIniciais();
+    inicializarTema();
     inicializarRotas();
     renderizarKanban();
     renderizarDashboard();
