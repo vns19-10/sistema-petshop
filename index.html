@@ -21,6 +21,7 @@
                 <li><a href="#dashboard" class="nav-link active" data-target="view-dashboard">Painel Kanban</a></li>
                 <li><a href="#cadastro" class="nav-link" data-target="view-cadastro">Novo Check-in</a></li>
                 <li><a href="#cadastrados" class="nav-link" data-target="view-cadastrados">Pets Cadastrados</a></li>
+                <li><a href="#visao-gerencial" class="nav-link" data-target="view-visao-gerencial">Dashboard</a></li>
             </ul>
         </nav>
     </header>
@@ -48,6 +49,34 @@
 
             </div>
         </section>
+
+        <section id="view-visao-gerencial" class="app-view hidden">
+    <div class="cabecalho-tela cabecalho-dashboard">
+        <h2>Visão Gerencial</h2>
+        <p>Acompanhamento de métricas operacionais e financeiras.</p>
+    </div>
+    
+    <div class="dashboard-cards" id="container-cards-resumo">
+        <div class="dashboard-cards" id="container-cards-resumo">
+            
+            <div class="card-resumo faturamento">
+                <h4>💰 Faturamento (Concluídos)</h4>
+                <p id="dash-faturamento">R$ 0,00</p>
+            </div>
+
+            <div class="card-resumo fila">
+                <h4>⏳ Pets na Espera</h4>
+                <p id="dash-fila">0</p>
+            </div>
+
+            <div class="card-resumo concluidos">
+                <h4>✅ Concluídos & Entregues</h4>
+                <p id="dash-concluidos">0</p>
+            </div>
+
+        </div>
+    </div>
+</section>
 
         <section id="view-cadastro" class="app-view hidden">
             <h2>Entrada de Cliente e Pet</h2>

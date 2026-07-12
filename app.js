@@ -100,6 +100,8 @@ function renderizarKanban() {
                 <p><small>Tutor: ${tutorSeguro}</small></p>
                 ${temAlerta ? `<p style="font-size: 0.8rem; color: #ef4444; margin-top: 6px; font-weight: 500;">⚠️ ${obsSegura}</p>` : ''}
                 <span class="badge-servico ${classeBadge}">${servicoSeguro}</span>
+                
+                ${atendimento.status === 'Pronto' ? `<button onclick="entregarPet(${atendimento.id})" class="btn-submit" style="margin-top: 12px; padding: 8px; font-size: 0.85rem;">🐾 Entregar Pet</button>` : ''}
             </div>
         `;
 
@@ -122,6 +124,27 @@ function renderizarKanban() {
     document.getElementById('count-fila').textContent = qtdFila;
     document.getElementById('count-andamento').textContent = qtdAndamento;
     document.getElementById('count-pronto').textContent = qtdPronto;
+
+    renderizarDashboard();
+}
+
+function renderizarDashboard() {
+    let faturamento = 0;
+    let qtdFila = 0;
+    let qtdConcluidos = 0;
+
+    DB_PETSHUB.atendimentos.forEach(atendimento => {
+        if (atendimento.status === 'Fila') {
+            qtdFila++;
+        } else if (atendimento.status === 'Pronto' || atendimento.status === 'Entregue') {
+            qtdConcluidos++;
+            faturamento += atendimento.valor;
+        }
+    });
+
+    document.getElementById('dash-faturamento').textContent = `R$ ${faturamento.toFixed(2).replace('.', ',')}`;
+    document.getElementById('dash-fila').textContent = qtdFila;
+    document.getElementById('dash-concluidos').textContent = qtdConcluidos;
 }
 
 function mudarStatusAtendimento(atendimentoId, novoStatus) {
@@ -469,6 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarDadosIniciais();
     inicializarRotas();
     renderizarKanban();
+    renderizarDashboard();
     renderizarPetsCadastrados();
     inicializarFormulario();
     inicializarDragAndDrop();
