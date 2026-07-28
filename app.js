@@ -131,7 +131,7 @@ function renderizarKanban() {
     renderizarDashboard();
 }
 
-function renderizarDashboard() {
+function renderizarDashboard(listaDeAtendimentos = DB_PETSHUB.atendimentos) {
     let faturamento = 0;
     let qtdFila = 0;
     let qtdConcluidos = 0;
@@ -140,12 +140,11 @@ function renderizarDashboard() {
     let countTosaHig = 0;
     let countCompleta = 0;
 
-    DB_PETSHUB.atendimentos.forEach(atendimento => {
-        if (atendimento.status === 'Fila') {
+    listaDeAtendimentos.forEach(atendimento => {
+        if (atendimento.status === 'Fila' || atendimento.status === 'Em Espera') {
             qtdFila++;
-        } else if (atendimento.status === 'Pronto' || atendimento.status === 'Entregue') {
+        } else if (atendimento.status === 'Pronto' || atendimento.status === 'Entregue' || atendimento.status === 'Concluido') {
             qtdConcluidos++;
-            
             faturamento += parseFloat(atendimento.valor) || 0;
             
             if (atendimento.servico === 'Banho Simples') countBanho++;
@@ -240,19 +239,14 @@ function renderizarDashboard() {
 }
 
 async function cancelarAtendimento(atendimentoId) {
-    // Confirmação de segurança antes de deletar
     if (!confirm("Tem certeza que deseja cancelar este atendimento?")) return;
 
     try {
-        // 1. Chama a rota DELETE que criamos no server.js
         const resposta = await fetch(`http://localhost:3000/api/atendimentos/${atendimentoId}`, {
             method: 'DELETE'
         });
 
         if (resposta.ok) {
-            // 2. SUCESSO! O banco de dados apagou a linha.
-            // Agora, recarregamos a fila direto do MySQL para atualizar a tela.
-            // Substitua 'carregarFila' pelo nome exato da sua função que faz o GET /api/fila
             carregarFila(); 
         } else {
             alert("Não foi possível excluir o atendimento do banco de dados.");
@@ -264,31 +258,28 @@ async function cancelarAtendimento(atendimentoId) {
 }
 
 async function entregarPet(atendimentoId) {
-    // Podemos reaproveitar inteligentemente a função que criamos para o arrastar e soltar!
-    // Ela já sabe como fazer o comando UPDATE no banco para o status desejado
     await mudarStatusAtendimento(atendimentoId, 'Entregue');
 }
 
-// Função para lidar com o envio do formulário de Check-in
 function inicializarFormulario() {
     const formCheckin = document.getElementById('form-checkin');
     
     if (formCheckin) {
         formCheckin.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Impede a página de recarregar
+            e.preventDefault();
 
             try {
-                // 1. Coleta os dados digitados na tela com os IDs exatos do HTML
                 const pacoteDados = {
+                    clienteId: formCheckin.dataset.clienteId || null, 
+                    petId: formCheckin.dataset.petId || null,
                     tutorNome: document.getElementById('tutor-nome').value,
                     tutorTelefone: document.getElementById('tutor-telefone').value,
                     petNome: document.getElementById('pet-nome').value,
                     petRaca: document.getElementById('pet-raca').value,
-                    servico: document.getElementById('servico-tipo').value, // ID corrigido
-                    valor: parseFloat(document.getElementById('servico-valor').value) // ID corrigido
+                    servico: document.getElementById('servico-tipo').value,
+                    valor: parseFloat(document.getElementById('servico-valor').value)
                 };
 
-                // 2. Faz a chamada (POST) para o nosso Back-end Node.js
                 const resposta = await fetch('http://localhost:3000/api/checkin', {
                     method: 'POST',
                     headers: {
@@ -299,27 +290,18 @@ function inicializarFormulario() {
 
                 const resultado = await resposta.json();
 
-                // 3. Avalia a resposta do servidor
                 if (resposta.ok) {
-            alert('✅ ' + resultado.mensagem); // Mensagem de sucesso
-            formCheckin.reset(); // Limpa o formulário
+                    alert('✅ ' + resultado.mensagem);
+                    formCheckin.reset();
+                    
+                    formCheckin.removeAttribute('data-pet-id');
+                    formCheckin.removeAttribute('data-cliente-id');
+                    
+                    carregarFila(); 
 
-            // CHAMA A FUNÇÃO AQUI PARA ATUALIZAR A TELA NA HORA! 👇
-            carregarFila(); 
-
-            // CÓDIGO TEMPORÁRIO PARA ATUALIZAR A ABA "PETS CADASTRADOS":
-            // Salva na memória antiga para a aba continuar funcionando
-            const novoClienteId = Date.now();
-            const novoPetId = Date.now() + 1;
-            DB_PETSHUB.clientes.push({ id: novoClienteId, nome: pacoteDados.tutorNome, telefone: pacoteDados.tutorTelefone });
-            DB_PETSHUB.pets.push({ id: novoPetId, clienteId: novoClienteId, nome: pacoteDados.petNome, raca: pacoteDados.petRaca });
-            DB_PETSHUB.salvar();
-            
-            renderizarPetsCadastrados(); // Atualiza a aba instantaneamente
-
-        } else {
-            alert('❌ Erro no servidor: ' + resultado.erro);
-        }
+                } else {
+                    alert('❌ Erro no servidor: ' + resultado.erro);
+                }
 
             } catch (erro) {
                 console.error('Erro de conexão ou no formulário:', erro);
@@ -329,48 +311,84 @@ function inicializarFormulario() {
     }
 }
 
-function renderizarPetsCadastrados(filtro = '') {
-    const container = document.getElementById('lista-pets');
-    let htmlCadastrados = '';
+async function renderizarPetsCadastrados() {
+    const listaPets = document.getElementById('lista-pets');
+    if (!listaPets) return;
 
-    const petsFiltrados = DB_PETSHUB.pets.filter(pet => {
-        const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
-        if (!cliente) return false;
-        
-        const termoBusca = filtro.toLowerCase();
-        const nomePetMatch = pet.nome.toLowerCase().includes(termoBusca);
-        const nomeTutorMatch = cliente.nome.toLowerCase().includes(termoBusca);
-        
-        return nomePetMatch || nomeTutorMatch;
-    });
+    listaPets.innerHTML = '';
 
-    petsFiltrados.forEach(pet => {
-        const cliente = DB_PETSHUB.clientes.find(c => c.id === pet.clienteId);
-        
-        htmlCadastrados += `
-            <div class="pet-card">
-                <h4>${escaparHTML(pet.nome)} <span class="badge-raca">(${escaparHTML(pet.raca)})</span></h4>
-                <p><strong>Tutor:</strong> ${escaparHTML(cliente.nome)}</p>
-                <p><strong>Telefone:</strong> ${escaparHTML(cliente.telefone)}</p>
-                
-                <button onclick="prepararNovoAtendimento(${pet.id})" style="margin-top: 15px; width: 100%; padding: 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-weight: bold; color: var(--text-color); transition: 0.2s;">+ Novo Atendimento</button>
-                
-                <button onclick="abrirModalHistorico(${pet.id})" style="margin-top: 8px; width: 100%; padding: 8px; background: white; border: 1px solid var(--primary-color); border-radius: 4px; cursor: pointer; font-weight: bold; color: var(--primary-color); transition: 0.2s;">📋 Ver Histórico</button>
-                
-                <div class="btn-group">
-                    <button class="btn-editar" onclick="editarPet(${pet.id})">✏️ Editar</button>
-                    <button class="btn-excluir" onclick="abrirModalExclusao(${pet.id})">🗑️ Excluir</button>
-                </div>
-            </div>
-        `;
-    });
+    try {
+        const resposta = await fetch('http://localhost:3000/api/pets');
+        const pets = await resposta.json();
 
-    container.innerHTML = htmlCadastrados;
+        if (pets.length === 0) {
+            listaPets.innerHTML = '<p>Nenhum pet cadastrado ainda.</p>';
+            return;
+        }
+
+        pets.forEach(pet => {
+            const card = document.createElement('div');
+            card.className = 'pet-card';
+            card.innerHTML = `
+                <h4>${pet.petNome} (${pet.raca})</h4>
+                <p>Tutor: ${pet.tutorNome}</p>
+                <p>Tel: ${pet.tutorTelefone}</p>
+                
+                <button class="btn-novo-atendimento" 
+                    style="margin-top: 15px; padding: 8px 16px; background-color: #00bfff; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s;"
+                    data-pet-id="${pet.petId}" 
+                    data-cliente-id="${pet.clienteId}"
+                    data-pet-nome="${pet.petNome}"
+                    data-pet-raca="${pet.raca}"
+                    data-tutor-nome="${pet.tutorNome}"
+                    data-tutor-telefone="${pet.tutorTelefone}">
+                    Novo Atendimento
+                </button>
+            `;
+            listaPets.appendChild(card);
+        });
+
+        document.querySelectorAll('.btn-novo-atendimento').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const dados = e.target.dataset;
+                
+                const inputTutorNome = document.getElementById('tutor-nome');
+                const inputTutorTel = document.getElementById('tutor-telefone');
+                const inputPetNome = document.getElementById('pet-nome');
+                const inputPetRaca = document.getElementById('pet-raca');
+                const formCheckin = document.getElementById('form-checkin');
+
+                if (inputTutorNome) inputTutorNome.value = dados.tutorNome;
+                if (inputTutorTel) inputTutorTel.value = dados.tutorTelefone;
+                if (inputPetNome) inputPetNome.value = dados.petNome;
+                if (inputPetRaca) inputPetRaca.value = dados.petRaca;
+
+                if (formCheckin) {
+                    formCheckin.dataset.clienteId = dados.clienteId;
+                    formCheckin.dataset.petId = dados.petId;
+                }
+
+                const todosBotoesMenu = document.querySelectorAll('header button, header a, nav button, nav a, .nav-link');
+                let botaoCheckinMenu = null;
+
+                todosBotoesMenu.forEach(elemento => {
+                    const texto = elemento.textContent.toLowerCase();
+                    if (texto.includes('check-in') || texto.includes('checkin')) {
+                        botaoCheckinMenu = elemento;
+                    }
+                });
+
+                if (botaoCheckinMenu) {
+                    botaoCheckinMenu.click();
+                }
+            });
+        });
+
+    } catch (erro) {
+        console.error('Erro ao carregar pets cadastrados:', erro);
+        listaPets.innerHTML = '<p>Erro ao carregar a lista de pets.</p>';
+    }
 }
-document.getElementById('input-busca').addEventListener('input', function(e) {
-    const textoDigitado = e.target.value;
-    renderizarPetsCadastrados(textoDigitado);
-});
 
 function prepararNovoAtendimento(petId) {
     const pet = DB_PETSHUB.pets.find(p => p.id === petId);
@@ -518,21 +536,18 @@ if (btnCancelar) {
     });
 }
 
-// Substitua a função antiga por esta no seu app.js
 async function mudarStatusAtendimento(atendimentoId, novoStatus) {
     try {
-        // Envia o novo status para o seu servidor Node.js
         const resposta = await fetch(`http://localhost:3000/api/atualizar-status/${atendimentoId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ status: novoStatus }) // Envia a palavra "Andamento", "Pronto", etc.
+            body: JSON.stringify({ status: novoStatus })
         });
 
         if (resposta.ok) {
             console.log('Status atualizado com sucesso no banco!');
-            // Atualiza a tela para mostrar o card na nova coluna
             carregarFila();
         } else {
             console.error('Erro ao atualizar status');
@@ -678,30 +693,25 @@ function inicializarTema() {
     Chart.defaults.color = temaSalvo === 'dark' ? '#cbd5e1' : '#64748b';
 }
 
-// Função para buscar os dados reais no Node.js e atualizar a tela
 async function carregarFila() {
     try {
         const resposta = await fetch('http://localhost:3000/api/fila');
         const atendimentos = await resposta.json();
 
-        // 1. IDs CORRIGIDOS para bater exatamente com o seu HTML
         const colunaFila = document.getElementById('container-fila'); 
         const colunaAtendimento = document.getElementById('container-andamento');
         const colunaConcluido = document.getElementById('container-pronto');
 
-        // Limpa as colunas antes de recarregar
         if (colunaFila) colunaFila.innerHTML = '';
         if (colunaAtendimento) colunaAtendimento.innerHTML = '';
         if (colunaConcluido) colunaConcluido.innerHTML = '';
 
         let countFila = 0, countAndamento = 0, countPronto = 0;
 
-        // Dentro da função carregarFila() ...
         atendimentos.forEach(item => {
         const card = document.createElement('div');
             card.className = 'kanban-card'; 
     
-    // 👇 ATUALIZE PARA item.atendimentoId 👇
             card.setAttribute('draggable', 'true'); 
             card.setAttribute('data-id', item.atendimentoId);  
 
@@ -716,9 +726,7 @@ async function carregarFila() {
             ${(item.status === 'Pronto' || item.status === 'Concluido') ? `<button onclick="entregarPet(${item.atendimentoId})" class="btn-submit" style="flex: 1; padding: 6px; font-size: 0.8rem; border-radius: 4px;">🐾 Entregar</button>` : ''}
         </div>
     `;
-            // ... resto do código continua igual
 
-            // 3. Distribuição corrigida aceitando diferentes nomes de status do Banco
             if ((item.status === 'Fila' || item.status === 'Em Espera') && colunaFila) {
                 colunaFila.appendChild(card);
                 countFila++;
@@ -731,10 +739,11 @@ async function carregarFila() {
             }
         });
 
-        // Atualiza os números no topo das colunas
         document.getElementById('count-fila').textContent = countFila;
         document.getElementById('count-andamento').textContent = countAndamento;
         document.getElementById('count-pronto').textContent = countPronto;
+
+      renderizarDashboard(atendimentos); 
 
     } catch (erro) {
         console.error('Erro ao carregar a fila:', erro);
@@ -750,5 +759,4 @@ document.addEventListener('DOMContentLoaded', () => {
     inicializarFormulario();
     inicializarDragAndDrop();
 });
-// Carrega a fila automaticamente ao abrir a página
 document.addEventListener('DOMContentLoaded', carregarFila);
